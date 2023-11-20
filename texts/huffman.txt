@@ -1,0 +1,114 @@
+import heapq 
+  
+# A Huffman Tree Node 
+class node: 
+    def __init__(self, freq, symbol, left=None, right=None): 
+        # frequency of symbol 
+        self.freq = freq 
+  
+        # symbol name (character) 
+        self.symbol = symbol 
+  
+        # node left of current node 
+        self.left = left 
+  
+        # node right of current node 
+        self.right = right 
+  
+        # tree direction (0/1) 
+        self.huff = '' 
+  
+    # less than operator
+    def __lt__(self, nxt): 
+        return self.freq < nxt.freq 
+  
+  
+# utility function to print huffman 
+# codes for all symbols in the newly 
+# created Huffman tree 
+def printNodes(node, val=''): 
+  
+    # huffman code for current node 
+    newVal = val + str(node.huff) 
+  
+    # if node is not an edge node 
+    # then traverse inside it 
+    if(node.left): 
+        printNodes(node.left, newVal) 
+    if(node.right): 
+        printNodes(node.right, newVal) 
+  
+        # if node is edge node then 
+        # display its huffman code 
+    if(not node.left and not node.right): 
+        print(f"\"{node.symbol}\" -> {newVal}") 
+
+
+def getEncoding(dict, node, val=''):
+    # huffman code for current node 
+    newVal = val + str(node.huff) 
+  
+    # if node is not an edge node 
+    # then traverse inside it 
+    if(node.left): 
+        getEncoding(dict, node.left, newVal) 
+    if(node.right): 
+        getEncoding(dict, node.right, newVal) 
+  
+    # if node is edge node then 
+    # add to dictionary
+    if(not node.left and not node.right): 
+        dict[node.symbol] = newVal
+
+
+def huffEncode(filename):
+
+    if not filename.lower().endswith('.txt'):
+        raise Exception("File must be a .txt file")
+    
+    with open(filename, 'r') as file:
+        data = file.read()
+
+        frequency = {}
+        for char in data:
+            if char in frequency:
+                frequency[char] += 1
+            else:
+                frequency[char] = 1
+        
+        # min heap of huffman nodes, smallest frequency first
+        nodes = []
+        for key in frequency:
+            heapq.heappush(nodes, node(freq=frequency[key], symbol=key))
+
+        while len(nodes) > 1: 
+
+            # remove 2 smallest frequency nodes
+            left = heapq.heappop(nodes)
+            right = heapq.heappop(nodes) 
+        
+            # assign directional value to these nodes 
+            left.huff = 0
+            right.huff = 1
+        
+            # combine the 2 smallest nodes to create 
+            # new node as their parent 
+            newNode = node(left.freq+right.freq, left.symbol+right.symbol, left, right) 
+        
+            heapq.heappush(nodes, newNode) 
+
+        encoding = {}
+        getEncoding(encoding, nodes[0])
+        
+        printNodes(nodes[0])
+        print(bytes(encoding['s'], 'utf-8'))
+
+        # write to binary file
+        outfile = filename[:-4] + '.bin'
+        with open(outfile, 'wb') as file:
+            for char in data:
+                file.write(bytes(encoding[char], 'utf-8'))
+
+        return frequency
+    
+huffEncode("huffman.txt")
